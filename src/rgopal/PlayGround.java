@@ -13,9 +13,7 @@ public class PlayGround {
 	public static void main(String[] args) throws MalformedURLException {
 		// TODO Auto-generated method stub
 		
-		Card.CardBuilder builder = Card.CardBuilder.newBuilderFromId(370413);
-		builder.queryForInfo();
-		System.out.println(builder.getPageContent());
+		Card darkConfidant = Card.CardBuilder.newBuilderFromId(370413).build();
 	}
 
 }

@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class Card {
 	// Should make a .. something for card types so that an individual card can have many types
@@ -25,11 +27,25 @@ public class Card {
 	private final String rulesText;
 	private final String flavorText;
 	private final Expansion cardExpansion;
-	private final int multiverseId;
+	private final Integer multiverseId;
+	private final EnumSet<Type> types;
 
 	private static final String queryString = "http://gatherer.wizards.com/Pages/Search/Default.aspx?";
+	private static final String multiverseIdQueryString = "http://gatherer.wizards.com/pages/card/Details.aspx?multiverseid=";
 
 	public static class CardBuilder {
+		
+		private enum FieldID {
+			NAME("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_nameRow"),
+			TYPE("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_typeRow"),
+			TEXT("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_textRow"),
+			FLAVOR("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_FlavorText");
+			private String id;
+			private FieldID(String id) {
+				this.id = id;
+			}
+		}
+		
 		private URL imageURL;
 		private String name;
 		private String rulesText;
@@ -37,13 +53,17 @@ public class Card {
 		private Expansion cardExpansion;
 		private URL cardURL;
 		private Integer multiverseId;
-		private String pageContents;
+		
+		private ArrayList<String> pageContents;
+		private EnumSet<Type> types;
 		
 		private CardBuilder(String cardName ) {
+			pageContents = new ArrayList<String>();
 			this.name = cardName;
 		}
 		
 		private CardBuilder(int multiverseId) {
+			pageContents = new ArrayList<String>();
 			this.multiverseId = multiverseId;
 		}
 		
@@ -88,6 +108,11 @@ public class Card {
 			this.multiverseId = id;
 			return this;
 		}
+		
+		public CardBuilder type(Type cardType) {
+			this.types.add(cardType);
+			return this;
+		}
 
 		public URL getCardURL() {
 			if (cardURL == null) {
@@ -104,36 +129,49 @@ public class Card {
 
 		}
 
-		/*
-		 * This method requires that the multiverse id or card name are submitted
-		 * 
-		 */
 		public void queryForInfo() {
-			if( this.pageContents == null ){
+			if( this.pageContents.isEmpty() ){
 				try {
 					URL url = getCardURL();
 					URLConnection connection = url.openConnection();
 					BufferedReader in = new BufferedReader(new InputStreamReader(
 							connection.getInputStream()));
 					String inputLine;
-					StringBuffer pageLine = new StringBuffer();
 					while ((inputLine = in.readLine()) != null)
-						pageLine.append(inputLine);
-					this.pageContents = pageLine.toString();
+						pageContents.add(inputLine);
+					
+					// try jsoup here instead of using the buffered reader
+					
+					/*
+					 * 					File pageContents = new File(url.toURI());
+					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+					Document doc = dBuilder.parse(pageContents);
+					doc.getDocumentElement().normalize();
+					NodeList nList = doc.getElementsByTagName(FieldID.NAME.toString());
+					
+					System.out.println(nList);
+					 * 
+					 */
 					in.close();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
+		
+		public void printPageContent(){
+			for( String s : this.pageContents )
+				System.out.println(s);
+		}
 
-		public String getPageContent() {
+		public ArrayList<String> getPageContent() {
 			return this.pageContents;
 		}
 
 		private String buildCardURL() {
 			if( this.multiverseId != null ) {
-				return "http://gatherer.wizards.com/pages/card/Details.aspx?multiverseid=" + this.multiverseId;
+				return multiverseIdQueryString + this.multiverseId;
 			}
 			StringBuffer cardNameQuery = new StringBuffer(queryString);
 			cardNameQuery.append("name=");
@@ -146,6 +184,9 @@ public class Card {
 		}
 
 		public Card build() {
+			this.queryForInfo();
+			this.getCardURL();
+			printPageContent();
 			return new Card(this);
 		}
 
@@ -154,7 +195,7 @@ public class Card {
 	@Override
 	public String toString() {
 		//TODO create a toString method for the Card
-		return "";
+		return this.name + " " + this.types.toString() + " " + this.rulesText;
 		
 	}
 	
@@ -165,6 +206,8 @@ public class Card {
 		this.flavorText = cb.flavorText;
 		this.cardExpansion = cb.cardExpansion;
 		this.multiverseId = cb.multiverseId;
+		this.types = cb.types;
 	}
+	
 
 }
