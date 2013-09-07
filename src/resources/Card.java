@@ -19,7 +19,7 @@ public class Card {
 	}
 
 	public enum Expansion {
-
+		MMA;
 	}
 
 	private final URL imageURL;
@@ -186,6 +186,7 @@ public class Card {
 		public Card build() {
 			this.queryForInfo();
 			this.getCardURL();
+			// don't use this after we get Jsoup installed and working
 			printPageContent();
 			return new Card(this);
 		}
