@@ -1,8 +1,12 @@
 package rgopal;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.swing.JFileChooser;
+
 import resources.Card;
+import resources.Deck;
 
 public class PlayGround {
 
@@ -14,6 +18,17 @@ public class PlayGround {
 		// TODO Auto-generated method stub
 		
 		Card darkConfidant = Card.CardBuilder.newBuilderFromId(370413).build();
+		System.out.println(darkConfidant);
+		
+		Card tarm = Card.CardBuilder.newBuilerFromName("Tarmogoyf").build();
+		System.out.println(tarm);
+		JFileChooser fChoose = new JFileChooser();
+		int returnVal = fChoose.showOpenDialog(null);	
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fChoose.getSelectedFile();
+            Deck d = Deck.loadDeckFromFile(file.getName());
+        }
+		
 	}
 
 }

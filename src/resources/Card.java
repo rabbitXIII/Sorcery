@@ -9,6 +9,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import org.jsoup.*;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 public class Card {
 	// Should make a .. something for card types so that an individual card can have many types
@@ -36,13 +39,18 @@ public class Card {
 	public static class CardBuilder {
 		
 		private enum FieldID {
-			NAME("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_nameRow"),
-			TYPE("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_typeRow"),
-			TEXT("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_textRow"),
-			FLAVOR("ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_FlavorText");
+			NAME("#ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_nameRow"),
+			TYPE("#ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_typeRow"),
+			TEXT("#ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_textRow"),
+			FLAVOR("#ctl00_ctl00_ctl00_MainContent_SubContent_SubContent_FlavorText");
 			private String id;
 			private FieldID(String id) {
 				this.id = id;
+			}
+			
+			@Override
+			public String toString() {
+				return id;
 			}
 		}
 		
@@ -53,17 +61,15 @@ public class Card {
 		private Expansion cardExpansion;
 		private URL cardURL;
 		private Integer multiverseId;
-		
-		private ArrayList<String> pageContents;
 		private EnumSet<Type> types;
 		
+		private Document doc;
+		
 		private CardBuilder(String cardName ) {
-			pageContents = new ArrayList<String>();
 			this.name = cardName;
 		}
 		
 		private CardBuilder(int multiverseId) {
-			pageContents = new ArrayList<String>();
 			this.multiverseId = multiverseId;
 		}
 		
@@ -129,50 +135,34 @@ public class Card {
 
 		}
 
-		public void queryForInfo() {
-			if( this.pageContents.isEmpty() ){
+		private void queryForInfo() {
+			if( this.doc == null){
 				try {
 					URL url = getCardURL();
-					URLConnection connection = url.openConnection();
-					BufferedReader in = new BufferedReader(new InputStreamReader(
-							connection.getInputStream()));
-					String inputLine;
-					while ((inputLine = in.readLine()) != null)
-						pageContents.add(inputLine);
-					
-					// try jsoup here instead of using the buffered reader
-					
-					/*
-					 * 					File pageContents = new File(url.toURI());
-					DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-					DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-					Document doc = dBuilder.parse(pageContents);
-					doc.getDocumentElement().normalize();
-					NodeList nList = doc.getElementsByTagName(FieldID.NAME.toString());
-					
-					System.out.println(nList);
-					 * 
-					 */
-					in.close();
+					doc = Jsoup.parse(url,1000);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
 		
-		public void printPageContent(){
-			for( String s : this.pageContents )
-				System.out.println(s);
-		}
-
-		public ArrayList<String> getPageContent() {
-			return this.pageContents;
+		private void parseDocForInfo() {
+			queryForInfo();
+			// name
+			
+			this.name = this.doc.select(FieldID.NAME.toString()).select(".value").text();
+			this.rulesText = this.doc.select(FieldID.TEXT.toString()).select(".value").text();
+			this.flavorText = this.doc.select(FieldID.FLAVOR.toString()).select(".value").text();
+			
+			// hardcoded as CREATURE so that toString works from Card
+			this.types = EnumSet.of(Type.CREATURE);
+				
 		}
 
 		private String buildCardURL() {
-			if( this.multiverseId != null ) {
+			if( this.multiverseId != null ) 
 				return multiverseIdQueryString + this.multiverseId;
-			}
+			
 			StringBuffer cardNameQuery = new StringBuffer(queryString);
 			cardNameQuery.append("name=");
 			for (String namePart : name.split(" ")) {
@@ -184,10 +174,7 @@ public class Card {
 		}
 
 		public Card build() {
-			this.queryForInfo();
-			this.getCardURL();
-			// don't use this after we get Jsoup installed and working
-			printPageContent();
+			parseDocForInfo();
 			return new Card(this);
 		}
 
