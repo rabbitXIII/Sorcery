@@ -20,15 +20,17 @@ public class PlayGround {
 		Card darkConfidant = Card.CardBuilder.newBuilderFromId(370413).build();
 		System.out.println(darkConfidant);
 		
-		Card tarm = Card.CardBuilder.newBuilerFromName("Tarmogoyf").build();
+		Card tarm = Card.CardBuilder.newBuilderFromName("Tarmogoyf").build();
 		System.out.println(tarm);
-		JFileChooser fChoose = new JFileChooser();
+/*		JFileChooser fChoose = new JFileChooser();
 		int returnVal = fChoose.showOpenDialog(null);	
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = fChoose.getSelectedFile();
             Deck d = Deck.loadDeckFromFile(file.getName());
         }
+		*/
 		
+		// looks like the newBuilderFromName doesn't work if the card name isn't unique to any other card
 	}
 
 }

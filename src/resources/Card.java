@@ -77,7 +77,7 @@ public class Card {
 			return new CardBuilder(multiverseId);
 		}
 		
-		public static CardBuilder newBuilerFromName(String name) {
+		public static CardBuilder newBuilderFromName(String name) {
 			return new CardBuilder(name);
 		}
 
@@ -138,8 +138,12 @@ public class Card {
 		private void queryForInfo() {
 			if( this.doc == null){
 				try {
+					/* Instead of querying gatherer, use the cards.xml from woogerworks / cockatrice client. 
+					 * the xml file is in the main directory
+					 * 
+					 */
 					URL url = getCardURL();
-					doc = Jsoup.parse(url,1000);
+					doc = Jsoup.parse(url,5000);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -149,7 +153,7 @@ public class Card {
 		private void parseDocForInfo() {
 			queryForInfo();
 			// name
-			
+			System.out.println(doc);
 			this.name = this.doc.select(FieldID.NAME.toString()).select(".value").text();
 			this.rulesText = this.doc.select(FieldID.TEXT.toString()).select(".value").text();
 			this.flavorText = this.doc.select(FieldID.FLAVOR.toString()).select(".value").text();

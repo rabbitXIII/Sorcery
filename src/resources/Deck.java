@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -47,20 +48,26 @@ public class Deck {
 			FileReader input = new FileReader(fileName);
 			BufferedReader buffReader = new BufferedReader(input);
 			String myLine = null;
+			HashMap<String, Integer> main = new HashMap<String, Integer>();
+			HashMap<String, Integer> side = new HashMap<String, Integer>();
 			
 			boolean sideboarding = false;
-			int main = 0, side = 0;
 			while ( (myLine = buffReader.readLine()) != null)	{ 
 				if(myLine.trim().isEmpty())
 					sideboarding = true;
-				else if(!sideboarding)
-					main++;
-				else
-					side++;
-				
+				else {
+					Integer numberOfCard = Integer.parseInt(myLine.substring(0,myLine.indexOf(' ')));
+					String cardName = myLine.substring(myLine.indexOf(' '));
+					if(!sideboarding) {
+						main.put(cardName, numberOfCard);
+					}
+					else {
+						side.put(cardName, numberOfCard);
+					}
+				}
 			}
-			System.out.println("Main unique: " + main + " side unique: " + side);
-			return createDeckFromMaps(null,null);
+			buffReader.close();
+			return createDeckFromMaps(main,side);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return new Deck(0,0);
@@ -83,10 +90,33 @@ public class Deck {
 		
 	}
 	
-	private static Deck createDeckFromMaps(HashMap<Card, Integer> mainDeck, HashMap<Card,Integer> sideBoard) {
+	public void addCardMain(Card newCard) {
+		mainDeck.add(newCard);
+	}
+	
+	public void addCardSide(Card newCard) {
+		sideboard.add(newCard);
+	}
+	
+	private static Deck createDeckFromMaps(HashMap<String, Integer> main, HashMap<String ,Integer> side) {
 		// initialize the deck
-		Deck loadedDeck = new Deck(0,0);
-		
+		Deck loadedDeck = new Deck(main.size(),side.size());
+		for(Map.Entry<String, Integer> entry : main.entrySet()) {
+			Card.CardBuilder cBuild = Card.CardBuilder.newBuilderFromName(entry.getKey());
+			for( int i = 0; i < entry.getValue(); i ++ ){
+				Card toAdd = cBuild.build();
+				loadedDeck.addCardMain(toAdd);
+				System.out.println(entry.getKey() + " turning into " + toAdd);
+			}
+		}
+			
+		for(Map.Entry<String, Integer> entry : side.entrySet()) {
+			Card.CardBuilder cBuild = Card.CardBuilder.newBuilderFromName(entry.getKey());
+			for( int i = 0; i < entry.getValue(); i ++ ){
+				Card toAdd = cBuild.build();
+				loadedDeck.addCardSide(toAdd);
+			}
+		}
 		// one by one load the cards into the deck
 		return loadedDeck;
 	}
